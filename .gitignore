@@ -1,0 +1,6 @@
+bin/
+obj/
+
+notes.md
+
+.vscode/launch.json
