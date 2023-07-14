@@ -20,6 +20,10 @@ internal static class Database
         {
             try
             {
+                if (_connection.State == System.Data.ConnectionState.Open)
+                {
+                    return true;
+                }
                 _connection.ConnectionString = GetConnectionString();
                 _connection.Open();
             }
@@ -69,39 +73,21 @@ internal static class Database
     {
         lock (_lock)
         {
-            try
+            if (ExecuteNonQuery($"CREATE DATABASE IF NOT EXISTS {_databaseName};", out _, false) == false)
             {
-                if (!Connect())
-                {
-                    return false;
-                }
-
-                if (ExecuteNonQuery($"CREATE DATABASE IF NOT EXISTS {_databaseName};", out _) == false)
-                {
-                    return false;
-                }
-
-                if (!ExecuteNonQuery($"USE {_databaseName};", out _))
-                {
-                    return false;
-                }
-
-                if (ExecuteNonQuery(
-                    "CREATE TABLE IF NOT EXISTS `solardata` (" +
-                    "`ID` INT(11) NOT NULL AUTO_INCREMENT," +
-                    "`watt` INT(11) NULL DEFAULT NULL," +
-                    "`timestamp` TIMESTAMP NOT NULL DEFAULT utc_timestamp()," +
-                    "PRIMARY KEY (`ID`) USING BTREE" +
-                    ") ENGINE = 'InnoDB' AUTO_INCREMENT = 1;", out _) == false)
-                {
-                    return false;
-                };
-
+                return false;
             }
-            finally
+
+            if (ExecuteNonQuery(
+                "CREATE TABLE IF NOT EXISTS `solardata` (" +
+                "`ID` INT(11) NOT NULL AUTO_INCREMENT," +
+                "`watt` INT(11) NULL DEFAULT NULL," +
+                "`timestamp` TIMESTAMP NOT NULL DEFAULT utc_timestamp()," +
+                "PRIMARY KEY (`ID`) USING BTREE" +
+                ") ENGINE = 'InnoDB' AUTO_INCREMENT = 1;", out _) == false)
             {
-                Disconnect();
-            }
+                return false;
+            };
         }
 
         return true;
@@ -114,7 +100,7 @@ internal static class Database
             try
             {
                 using MySqlCommand command = _connection.CreateCommand();
-                command.CommandText = query;
+                command.CommandText = $"USE {_databaseName};" + query;
                 command.Parameters.AddRange(parameters);
                 return command.ExecuteReader();
             }
@@ -126,7 +112,7 @@ internal static class Database
         }
     }
 
-    private static bool ExecuteNonQuery(string commandText, out long lastId, params MySqlParameter[] parameters)
+    private static bool ExecuteNonQuery(string commandText, out long lastId, bool prependUseDatabase = true, params MySqlParameter[] parameters)
     {
         lock (_lock)
         {
@@ -135,7 +121,7 @@ internal static class Database
                 Connect();
 
                 using MySqlCommand command = _connection.CreateCommand();
-                command.CommandText = commandText;
+                command.CommandText = (prependUseDatabase ? $"USE {_databaseName};" : "") + commandText;
                 command.Parameters.AddRange(parameters);
                 command.ExecuteNonQuery();
                 lastId = command.LastInsertedId;
@@ -160,12 +146,42 @@ internal static class Database
         lock (_lock)
         {
             if (!ExecuteNonQuery($"INSERT INTO `solardata` (`watt`) VALUES ({watt})", out _))
-                {
+            {
                 return false;
             }
         }
 
         return true;
+    }
+
+    public static List<(int Watt, DateTime Timestamp)> SelectWatts(TimeSpan TimeSpanFrom)
+    {
+        List<(int Watt, DateTime Timestamp)> result = new();
+
+        lock (_lock)
+        {
+            try
+            {
+                Connect();
+
+                using MySqlDataReader? reader = ExecuteQuery(
+                    $"SELECT `watt`,`timestamp` FROM `solardata` " +
+                    $"WHERE `timestamp` BETWEEN DATE_SUB(NOW(), INTERVAL {TimeSpanFrom.Days} DAY) AND NOW();");
+
+                while (reader?.Read() == true)
+                {
+                    result.Add((reader.GetInt32("watt"),
+                                DateTime.SpecifyKind(reader.GetDateTime("timestamp"), DateTimeKind.Utc).ToLocalTime()
+                               ));
+                }
+            }
+            finally
+            {
+                Disconnect();
+            }
+        }
+
+        return result;
     }
 
     public static (int? Watt, DateTime? Timestamp) SelectLastWatt()
@@ -219,7 +235,7 @@ internal static class Database
 
         return (null, null);
     }
-    
+
     public static DateTime? SelectMinTimestamp()
     {
         lock (_lock)

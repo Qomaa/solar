@@ -27,8 +27,15 @@ internal class WebServer
 
             app.MapGet("/", (HttpContext c) =>
             {
+                string base64image = string.Empty;
+                if (System.IO.File.Exists(WattFetcher.ImagePath))
+                {
+                    base64image = System.Convert.ToBase64String(System.IO.File.ReadAllBytes(WattFetcher.ImagePath));
+                }
+
                 c.Response.Headers.Add("Content-Type", "text/html");
-                return GetFinalResult();
+
+                return GetHtml(base64image);
             });
 
             app.Run();
@@ -39,39 +46,39 @@ internal class WebServer
         }
     }
 
-    private string GetFinalResult()
-    {
-        try
-        {
-            // string? solarResult = GetSolarFullResult();
+    // private string GetFinalResult()
+    // {
+    //     try
+    //     {
+    //         // string? solarResult = GetSolarFullResult();
 
-            // if (solarResult is null)
-            // {
-            //     return "Grad keine Daten vorhanden... Voll Schade, aber so ist das Leben eben.";
-            // }
+    //         // if (solarResult is null)
+    //         // {
+    //         //     return "Grad keine Daten vorhanden... Voll Schade, aber so ist das Leben eben.";
+    //         // }
 
-            // var watts = GetWatts(solarResult);
-            // string? technical = GetTechnicalResult(solarResult);
+    //         // var watts = GetWatts(solarResult);
+    //         // string? technical = GetTechnicalResult(solarResult);
 
 
-            return GetHtml();
+    //         // return GetHtml();
 
-            //  Environment.NewLine + Environment.NewLine + Environment.NewLine +
-            //        $"{watt}" + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine +
-            //        $"############################################################################################" + Environment.NewLine +
-            //        $"Techische Daten:" + Environment.NewLine + Environment.NewLine +
-            //        technical;
-        }
-        catch (System.Exception ex)
-        {
-            return "Etwas ging schief..." + Environment.NewLine + Environment.NewLine + ex.Message + Environment.NewLine + Environment.NewLine + ex.StackTrace;
-        }
-    }
+    //         //  Environment.NewLine + Environment.NewLine + Environment.NewLine +
+    //         //        $"{watt}" + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine +
+    //         //        $"############################################################################################" + Environment.NewLine +
+    //         //        $"Techische Daten:" + Environment.NewLine + Environment.NewLine +
+    //         //        technical;
+    //     }
+    //     catch (System.Exception ex)
+    //     {
+    //         return "Etwas ging schief..." + Environment.NewLine + Environment.NewLine + ex.Message + Environment.NewLine + Environment.NewLine + ex.StackTrace;
+    //     }
+    // }
 
-    private string GetHtml()
-    {
+    private string GetHtml(string image)
+    {//<!DOCTYPE html>
         return @$"
-            <!DOCTYPE html>
+            
             <html>
             <head>
                 <title>Solar sun600g3-eu-230</title>
@@ -126,6 +133,7 @@ internal class WebServer
                 <div class=""energy-stats"">
                     <p>Max: <strong>{_wattFetcher.LastSelectedMaxWatt.Watt.ToString() ?? "??"} W</strong> ({_wattFetcher.LastSelectedMaxWatt.Timestamp?.ToString("ddd dd.MM.yyyy HH:mm:ss", new System.Globalization.CultureInfo("de-DE")) ?? "??"})</p>
                 </div>
+                <img src=""data:image/svg+xml;base64,{image}"" />
             </body>
             </html>";
     }
