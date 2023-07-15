@@ -1,11 +1,11 @@
 internal class WebServer
 {
     private Thread _webServerThread;
-    private WattFetcher _wattFetcher;
+    private DataManager _dataManager;
 
-    public WebServer(WattFetcher wattFetcher)
+    public WebServer(DataManager wattFetcher)
     {
-        _wattFetcher = wattFetcher;
+        _dataManager = wattFetcher;
         _webServerThread = new(() => StartWebServerAndWait());
         _webServerThread.IsBackground = true;
     }
@@ -27,15 +27,9 @@ internal class WebServer
 
             app.MapGet("/", (HttpContext c) =>
             {
-                string base64image = string.Empty;
-                if (System.IO.File.Exists(WattFetcher.ImagePath))
-                {
-                    base64image = System.Convert.ToBase64String(System.IO.File.ReadAllBytes(WattFetcher.ImagePath));
-                }
-
                 c.Response.Headers.Add("Content-Type", "text/html");
 
-                return GetHtml(base64image);
+                return GetResultHtml();
             });
 
             app.Run();
@@ -46,39 +40,9 @@ internal class WebServer
         }
     }
 
-    // private string GetFinalResult()
-    // {
-    //     try
-    //     {
-    //         // string? solarResult = GetSolarFullResult();
-
-    //         // if (solarResult is null)
-    //         // {
-    //         //     return "Grad keine Daten vorhanden... Voll Schade, aber so ist das Leben eben.";
-    //         // }
-
-    //         // var watts = GetWatts(solarResult);
-    //         // string? technical = GetTechnicalResult(solarResult);
-
-
-    //         // return GetHtml();
-
-    //         //  Environment.NewLine + Environment.NewLine + Environment.NewLine +
-    //         //        $"{watt}" + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine +
-    //         //        $"############################################################################################" + Environment.NewLine +
-    //         //        $"Techische Daten:" + Environment.NewLine + Environment.NewLine +
-    //         //        technical;
-    //     }
-    //     catch (System.Exception ex)
-    //     {
-    //         return "Etwas ging schief..." + Environment.NewLine + Environment.NewLine + ex.Message + Environment.NewLine + Environment.NewLine + ex.StackTrace;
-    //     }
-    // }
-
-    private string GetHtml(string image)
-    {//<!DOCTYPE html>
+    private string GetResultHtml()
+    {
         return @$"
-            
             <html>
             <head>
                 <title>Solar sun600g3-eu-230</title>
@@ -123,18 +87,19 @@ internal class WebServer
                 <h1>Solaranlage sun600g3-eu-230</h1>
 
                 <div class=""currentWatt"">
-                    <p>Jetzt: <strong>{_wattFetcher.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ({_wattFetcher.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"})</p>
+                    <p>Jetzt: <strong>{_dataManager.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"})</p>
                 </div>
 
                 <div class=""energy-stats"">
-                    <p>Insgesamt: <strong>{_wattFetcher.TotalKwh?.ToString("0.0") ?? "??"} kWh</strong></p>
+                    <p>Insgesamt: <strong>{_dataManager.TotalKwh?.ToString("0.0") ?? "??"} kWh</strong></p>
+                    <p>Profit: <strong>{_dataManager.ProfitEuro.ToString("0.0") ?? "??"} &euro;</strong></p>
+                    <p>Max: <strong>{_dataManager.LastSelectedMaxWatt.Watt.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedMaxWatt.Timestamp?.ToString("ddd dd.MM.yyyy HH:mm:ss", new System.Globalization.CultureInfo("de-DE")) ?? "??"})</p>
                 </div>
-
-                <div class=""energy-stats"">
-                    <p>Max: <strong>{_wattFetcher.LastSelectedMaxWatt.Watt.ToString() ?? "??"} W</strong> ({_wattFetcher.LastSelectedMaxWatt.Timestamp?.ToString("ddd dd.MM.yyyy HH:mm:ss", new System.Globalization.CultureInfo("de-DE")) ?? "??"})</p>
-                </div>
-                <img src=""data:image/svg+xml;base64,{image}"" />
-            </body>
-            </html>";
+                " +
+                string.Join(Environment.NewLine, _dataManager.Plots.Select(
+                    i => @$"<img src=""data:image/svg+xml;base64,{i}""/>")) +
+        @" 
+        </body>
+        </html>";
     }
 }

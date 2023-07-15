@@ -81,7 +81,7 @@ internal static class Database
             if (ExecuteNonQuery(
                 "CREATE TABLE IF NOT EXISTS `solardata` (" +
                 "`ID` INT(11) NOT NULL AUTO_INCREMENT," +
-                "`watt` INT(11) NULL DEFAULT NULL," +
+                "`watt` INT(11) NULL DEFAULT 0," +
                 "`timestamp` TIMESTAMP NOT NULL DEFAULT utc_timestamp()," +
                 "PRIMARY KEY (`ID`) USING BTREE" +
                 ") ENGINE = 'InnoDB' AUTO_INCREMENT = 1;", out _) == false)
@@ -154,7 +154,7 @@ internal static class Database
         return true;
     }
 
-    public static List<(int Watt, DateTime Timestamp)> SelectWatts(TimeSpan TimeSpanFrom)
+    public static List<(int Watt, DateTime Timestamp)> SelectWatts(TimeSpan TimeSpanFrom = default)
     {
         List<(int Watt, DateTime Timestamp)> result = new();
 
@@ -164,15 +164,48 @@ internal static class Database
             {
                 Connect();
 
-                using MySqlDataReader? reader = ExecuteQuery(
-                    $"SELECT `watt`,`timestamp` FROM `solardata` " +
-                    $"WHERE `timestamp` BETWEEN DATE_SUB(NOW(), INTERVAL {TimeSpanFrom.Days} DAY) AND NOW();");
+                using MySqlDataReader? reader =
+                    ExecuteQuery(
+                        "SELECT `watt`,`timestamp` FROM `solardata` " +
+                        (TimeSpanFrom == default ?
+                            ";"
+                            :
+                            $"WHERE `timestamp` BETWEEN DATE_SUB(NOW(), INTERVAL {TimeSpanFrom.Days} DAY) AND NOW();"));
 
                 while (reader?.Read() == true)
                 {
                     result.Add((reader.GetInt32("watt"),
                                 DateTime.SpecifyKind(reader.GetDateTime("timestamp"), DateTimeKind.Utc).ToLocalTime()
                                ));
+                }
+            }
+            finally
+            {
+                Disconnect();
+            }
+        }
+
+        return result;
+    }
+
+    public static List<(int Watt, DateTime Timestamp)> SelectAverageWattPerDay()
+    {
+        List<(int Watt, DateTime Timestamp)> result = new();
+
+        lock (_lock)
+        {
+            try
+            {
+                Connect();
+                using MySqlDataReader? reader = ExecuteQuery(
+                    "SELECT DATE(`timestamp`) AS day, AVG(`watt`) as avgwatt from `solardata` GROUP BY day;");
+
+                while (reader?.Read() == true)
+                {
+                    result.Add((reader.
+                        GetInt32("avgwatt"), 
+                        DateTime.SpecifyKind(reader.GetDateTime("day"), DateTimeKind.Utc).ToLocalTime()
+                    ));
                 }
             }
             finally

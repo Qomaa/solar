@@ -2,17 +2,16 @@ using OxyPlot.Series;
 using OxyPlot.Axes;
 using OxyPlot;
 
-internal class WattFetcher
+/// <summary>
+/// Responsible for obtaining data from the Solar-Viech and holding the data in memory accessible through properties.
+/// </summary>
+internal class DataManager
 {
+    public const float PRICE_PER_KWH = 41.37F;
+
     private Thread _fetchAndStoreThread;
 
-    /// <summary>
-    /// WORKAROUND: File brauchen wir nicht vermutlich.... einfach direkt base64 im Speicher halten alter
-    /// </summary>
-    /// <returns></returns>
-    public static string ImagePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test.svg");
-
-    public WattFetcher()
+    public DataManager()
     {
         _fetchAndStoreThread = new Thread(() => FetchAndStoreLoop());
     }
@@ -47,22 +46,27 @@ internal class WattFetcher
 
                 LastSelectedWatt = Database.SelectLastWatt();
                 LastSelectedMaxWatt = Database.SelectMaxWatt();
+                ProfitEuro = TotalKwh.HasValue ? TotalKwh.Value * PRICE_PER_KWH / 100 : 0;
 
-                CreatePlot();
+                Plots.Clear();
+                CreatePlot("1 Tag", () => Database.SelectWatts(TimeSpan.FromDays(1)));
+                CreatePlot("5 Tag", () => Database.SelectWatts(TimeSpan.FromDays(5)));
+                CreatePlot("Durchschnitt pro Tag", () => Database.SelectAverageWattPerDay());
+                CreatePlot("Insgesamt", () => Database.SelectWatts());
             }
             catch (System.Exception ex)
             {
                 Log.Exception(ex);
             }
 
-            Thread.Sleep(Program.InputArgs.StoreToDbInterval);
+            Thread.Sleep(Program.InputArgs.StoreToDbInterval / 2);
         }
     }
 
-    private static void CreatePlot()
+    private void CreatePlot(string title, Func<List<(int Watt, DateTime Timestamp)>> dataFunc)
     {
-        // Daten der dieser Woche holen
-        var data = Database.SelectWatts(TimeSpan.FromDays(5));
+        //var data = Database.SelectWatts(fromTimeSpan);
+        var data = dataFunc();
         
         LineSeries series = new();
         series.Color = OxyColors.Blue;
@@ -97,17 +101,19 @@ internal class WattFetcher
         l.TickStyle = TickStyle.Outside;
         
         PlotModel plot = new();
-
+        plot.Title = title;
         plot.Axes.Add(d);
         plot.Axes.Add(l);
         plot.Series.Add(series);
         // plot.Background = OxyColors.White;
 
-        using (var stream = File.Create(ImagePath))
-        {
-            var exporter = new OxyPlot.SvgExporter { Width = 1280, Height = 1024 };
-            exporter.Export(plot, stream);
-        }
+        using MemoryStream ms = new MemoryStream();
+        
+        SvgExporter exporter = new() { Width = 1280, Height = 1024 };
+        exporter.Export(plot, ms);
+
+        string base64Plot = System.Convert.ToBase64String(ms.ToArray());
+        Plots.Add(base64Plot);
     }
 
     private static string? GetSolarFullResult()
@@ -181,5 +187,7 @@ internal class WattFetcher
 
     public (int? Watt, DateTime? Timestamp) LastSelectedMaxWatt { get; private set; }
 
-    public DateTime? MinTimestamp { get; private set; }
+    public List<string> Plots {get; private set;} = new();
+
+    public double ProfitEuro {get; private set;}
 }

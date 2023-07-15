@@ -24,7 +24,7 @@ internal class Program
                 return;
             }
 
-            WattFetcher fetcher = new();
+            DataManager fetcher = new();
             if (!fetcher.StartThread())
             {
                 return;
