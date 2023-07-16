@@ -92,7 +92,7 @@ internal class WebServer
 
                 <div class=""energy-stats"">
                     <p>Insgesamt: <strong>{_dataManager.TotalKwh?.ToString("0.0") ?? "??"} kWh</strong></p>
-                    <p>Profit: <strong>{_dataManager.ProfitEuro.ToString("0.0") ?? "??"} &euro;</strong></p>
+                    <p>Profit: <strong>{_dataManager.ProfitEuro.ToString("0.00")} &euro;</strong></p>
                     <p>Max: <strong>{_dataManager.LastSelectedMaxWatt.Watt.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedMaxWatt.Timestamp?.ToString("ddd dd.MM.yyyy HH:mm:ss", new System.Globalization.CultureInfo("de-DE")) ?? "??"})</p>
                 </div>
                 " +

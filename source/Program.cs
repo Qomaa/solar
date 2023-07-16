@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Runtime.InteropServices;
 
 internal class Program
 {
@@ -13,6 +14,8 @@ internal class Program
         try
         {
             Log.Info($"{Version.ProgramVersion} started.");
+
+            PosixSignalRegistration.Create(PosixSignal.SIGTERM, c => _quitProgramEvent.Set());
 
             if (!InputArgs.Initialize())
             {

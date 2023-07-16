@@ -59,7 +59,7 @@ internal class DataManager
                 Log.Exception(ex);
             }
 
-            Thread.Sleep(Program.InputArgs.StoreToDbInterval / 2);
+            Thread.Sleep(Program.InputArgs.StoreToDbInterval);
         }
     }
 
