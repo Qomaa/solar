@@ -22,7 +22,8 @@ Usage:
 -f, --logdir: log directory. if none is provied or not able to write, logs to console
 ```
 
-Update constant DataManager.PRICE_PER_KWH.
+- Update constant DataManager.PRICE_PER_KWH.
+- Web service is accesible through port 5000 by default. You change it in the appsettings.json.
 
 # Screenshots
 ![plot](./screenshots/1.png)
