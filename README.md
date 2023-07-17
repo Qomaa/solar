@@ -3,8 +3,8 @@ Fetch output power from sun600g3-eu-230. Store output in a MariaDB. Provide stor
 Self hosted: No cloud or app required
 
 ## Requirements
-A running MariDB server.
-.NET 7 runtime
+- A running MariDB server.
+- .NET 7 runtime
 
 # Usage
 
@@ -19,4 +19,9 @@ Usage:
 -x, --solarpassword: password for username for solarhost, e.g.: admin
 -f, --logdir: log directory. if none is provied or not able to write, logs to console
 ```
+
+Update constant DataManager.PRICE_PER_KWH.
+
 # Screenshots
+![plot](./screenshots/1.png)
+![plot](./screenshots/2.png)
