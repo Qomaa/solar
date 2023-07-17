@@ -1,9 +1,10 @@
 # solar
 Fetch output power from sun600g3-eu-230. Store output in a MariaDB. Provide stored data over a web server.
+
 Self hosted: No cloud or app required
 
 ## Requirements
-- A running MariDB server.
+- A running MariaDB server.
 - .NET 7 runtime
 
 # Usage
