@@ -12,9 +12,9 @@ internal class InputArgs
 
     public bool Initialize()
     {
-        if (_args.Length < 2)
+        if (_args.Length < 2 ||
+            _args.Contains("-h") || _args.Contains("--help"))
         {
-            Log.Error("No arguments provided.");
             Log.Info(GetParametersHelp());
             return false;
         }
@@ -91,6 +91,7 @@ internal class InputArgs
         return Environment.NewLine +
                $"{Version.ProgramVersion}" + Environment.NewLine + Environment.NewLine +
                "Usage:" + Environment.NewLine +
+               "-h, --help: prints this help" + Environment.NewLine +
                "-d, --dbserver: Server address of MySQL database, e.g.: 127.0.0.1" + Environment.NewLine +
                "-u, --dbuser: user for MySQL database, e.g.: user" + Environment.NewLine +
                "-p, --dbpassword: password for database user, e.g. ********" + Environment.NewLine +
