@@ -1,5 +1,5 @@
 # Self hosted web service for sun600g3
-Fetch output power from sun600g3-eu-230. Store output in a MariaDB. Provide stored data over a web server.
+Fetches output power from sun600g3-eu-230. Stores output in a MariaDB. Provides stored data over a web server.
 
 Self hosted: No cloud or app required
 
