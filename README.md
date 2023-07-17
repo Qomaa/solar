@@ -7,6 +7,7 @@ Self hosted: No cloud or app required
 - .NET 7 runtime
 
 # Usage
+$ ./solar2 --help
 
 ```
 Usage:
