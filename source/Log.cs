@@ -26,6 +26,7 @@ internal static class Log
         try
         {
             System.IO.Directory.CreateDirectory(Program.InputArgs.LogDirectory);
+            LogConsole = false;
         }
         catch (System.Exception)
         {
