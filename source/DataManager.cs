@@ -41,7 +41,7 @@ internal class DataManager
 
                 if (watt.HasValue)
                 {
-                    Database.InsertWatt(watt.Value);    
+                    Database.InsertWatt(watt.Value);
                 }
 
                 LastSelectedWatt = Database.SelectLastWatt();
@@ -49,12 +49,16 @@ internal class DataManager
                 ProfitEuro = TotalKwh.HasValue ? TotalKwh.Value * PRICE_PER_KWH / 100 : 0;
 
                 Plots.Clear();
-                CreatePlot("1 Tag", () => Database.SelectWatts(TimeSpan.FromDays(1)));
-                CreatePlot("5 Tag", () => Database.SelectWatts(TimeSpan.FromDays(5)));
-                CreatePlot("Durchschnitt pro Tag", () => Database.SelectAverageWattPerDay());
-                CreatePlot("Insgesamt", () => Database.SelectWatts());
+                CreatePlot("24h", Database.SelectWatts(TimeSpan.FromDays(1)), "HH:mm", DateTimeIntervalType.Hours);
+                CreatePlot("5 Tage", Database.SelectWatts(TimeSpan.FromDays(5)), "ddd dd.MM.", DateTimeIntervalType.Days);
+                CreatePlot("Durchschnitt pro Tag", Database.SelectAverageWattPerDay(), "ddd dd.MM.", DateTimeIntervalType.Days);
+                CreatePlot("Alle Tage", Database.SelectWatts(), "ddd dd.MM.", DateTimeIntervalType.Days);
+                // CreatePlot("Erster Wert", Database.SelectFirstWattTimePerDay()
+                //                                   .Select(d => (d.Date, DateTimeAxis.ToDouble(d.FirstWattTime)))
+                //                                   .ToList()
+                //                                   , "", DateTimeIntervalType.Days);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Log.Exception(ex);
             }
@@ -63,29 +67,28 @@ internal class DataManager
         }
     }
 
-    private void CreatePlot(string title, Func<List<(int Watt, DateTime Timestamp)>> dataFunc)
+    private void CreatePlot(
+        string title,
+        List<(DateTime Timestamp, double Y)> data,
+        string xAxisStringFormat,
+        DateTimeIntervalType xAxisIntervalType)
     {
-        //var data = Database.SelectWatts(fromTimeSpan);
-        var data = dataFunc();
-        
         LineSeries series = new();
         series.Color = OxyColors.Blue;
         // series.StrokeThickness = 1;
         series.MarkerFill = OxyColors.Blue;
         series.MarkerType = MarkerType.Circle;
-        
-        series.Points.AddRange(data.Select(d =>
-        {
-            DataPoint point = new(DateTimeAxis.ToDouble(d.Timestamp), (double)d.Watt);
-            return point;
-        })
-        .ToList());
+
+        series.Points.AddRange(
+            data.Select(d => new DataPoint(DateTimeAxis.ToDouble(d.Timestamp), d.Y))
+                .ToArray()
+        );
 
         DateTimeAxis d = new();
         d.Minimum = DateTimeAxis.ToDouble(data.Min(d => d.Timestamp));
         d.Maximum = DateTimeAxis.ToDouble(data.Max(d => d.Timestamp));
-        d.StringFormat = "ddd dd.MM.";
-        d.IntervalType = DateTimeIntervalType.Days;
+        d.StringFormat = xAxisStringFormat;
+        d.IntervalType = xAxisIntervalType;
         d.IntervalLength = 100;
         d.FontSize = 20;
         d.TickStyle = TickStyle.Outside;
@@ -93,13 +96,13 @@ internal class DataManager
         d.MajorTickSize = 15;
 
         LinearAxis l = new();
-        l.Minimum = data.Min(d => d.Watt);
-        l.Maximum = data.Max(d => d.Watt);
+        l.Minimum = data.Min(d => d.Y);
+        l.Maximum = data.Max(d => d.Y);
         l.Title = "Watt";
         l.FontSize = 20;
         l.TitleFontSize = 20;
         l.TickStyle = TickStyle.Outside;
-        
+
         PlotModel plot = new();
         plot.Title = title;
         plot.Axes.Add(d);
@@ -107,14 +110,66 @@ internal class DataManager
         plot.Series.Add(series);
         // plot.Background = OxyColors.White;
 
-        using MemoryStream ms = new MemoryStream();
-        
+        using MemoryStream ms = new();
+
         SvgExporter exporter = new() { Width = 1280, Height = 1024 };
         exporter.Export(plot, ms);
 
-        string base64Plot = System.Convert.ToBase64String(ms.ToArray());
+        string base64Plot = Convert.ToBase64String(ms.ToArray());
         Plots.Add(base64Plot);
     }
+
+    // private void CreatePlot(
+    //     string title,
+    //     List<(int Watt, DateTime Timestamp)> data,
+    //     string xAxisStringFormat,
+    //     DateTimeIntervalType xAxisIntervalType)
+    // {
+    //     LineSeries series = new();
+    //     series.Color = OxyColors.Blue;
+    //     // series.StrokeThickness = 1;
+    //     series.MarkerFill = OxyColors.Blue;
+    //     series.MarkerType = MarkerType.Circle;
+
+    //     series.Points.AddRange(
+    //         data.Select(d => new DataPoint(DateTimeAxis.ToDouble(d.Timestamp), d.Watt))
+    //             .ToArray()
+    //     );
+
+    //     DateTimeAxis d = new();
+    //     d.Minimum = DateTimeAxis.ToDouble(data.Min(d => d.Timestamp));
+    //     d.Maximum = DateTimeAxis.ToDouble(data.Max(d => d.Timestamp));
+    //     d.StringFormat = xAxisStringFormat;
+    //     d.IntervalType = xAxisIntervalType;
+    //     d.IntervalLength = 100;
+    //     d.FontSize = 20;
+    //     d.TickStyle = TickStyle.Outside;
+    //     d.AxisTickToLabelDistance = 30;
+    //     d.MajorTickSize = 15;
+
+    //     LinearAxis l = new();
+    //     l.Minimum = data.Min(d => d.Watt);
+    //     l.Maximum = data.Max(d => d.Watt);
+    //     l.Title = "Watt";
+    //     l.FontSize = 20;
+    //     l.TitleFontSize = 20;
+    //     l.TickStyle = TickStyle.Outside;
+
+    //     PlotModel plot = new();
+    //     plot.Title = title;
+    //     plot.Axes.Add(d);
+    //     plot.Axes.Add(l);
+    //     plot.Series.Add(series);
+    //     // plot.Background = OxyColors.White;
+
+    //     using MemoryStream ms = new MemoryStream();
+
+    //     SvgExporter exporter = new() { Width = 1280, Height = 1024 };
+    //     exporter.Export(plot, ms);
+
+    //     string base64Plot = System.Convert.ToBase64String(ms.ToArray());
+    //     Plots.Add(base64Plot);
+    // }
 
     private static string? GetSolarFullResult()
     {
@@ -124,7 +179,7 @@ internal class DataManager
             string base64Authentication = Convert.ToBase64String(
                 System.Text.ASCIIEncoding.UTF8.GetBytes($"{Program.InputArgs.SolarUser}:{Program.InputArgs.SolarPassword}"));
 
-            HttpClient s = new HttpClient();
+            HttpClient s = new();
             s.BaseAddress = new Uri(url);
             s.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", base64Authentication);
 
@@ -187,7 +242,7 @@ internal class DataManager
 
     public (int? Watt, DateTime? Timestamp) LastSelectedMaxWatt { get; private set; }
 
-    public List<string> Plots {get; private set;} = new();
+    public List<string> Plots { get; private set; } = new();
 
-    public double ProfitEuro {get; private set;}
+    public double ProfitEuro { get; private set; }
 }

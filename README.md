@@ -26,7 +26,7 @@ Usage:
 ```
 
 - Update constant DataManager.PRICE_PER_KWH.
-- Web service is accesible through port 5000 by default. You change it in the appsettings.json.
+- Web service is accesible through port 5000 by default. You can change it in the appsettings.json.
 
 # Screenshots
 ![plot](./screenshots/1.png)

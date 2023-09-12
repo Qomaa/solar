@@ -101,7 +101,7 @@ internal static class Log
         else
         {
 
-            System.IO.File.AppendAllText(GetLogFile(now), logMessage);
+            File.AppendAllText(GetLogFile(now), logMessage);
         }
         
         // Console.ResetColor();
@@ -113,6 +113,6 @@ internal static class Log
     {
         string file = $"{(now.ToString("yyyyMMdd"))}.log";
 
-        return System.IO.Path.Combine(Program.InputArgs.LogDirectory, file);
+        return Path.Combine(Program.InputArgs.LogDirectory, file);
     }
 }

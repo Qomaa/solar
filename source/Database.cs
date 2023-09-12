@@ -154,9 +154,9 @@ internal static class Database
         return true;
     }
 
-    public static List<(int Watt, DateTime Timestamp)> SelectWatts(TimeSpan TimeSpanFrom = default)
+    public static List<(DateTime Timestamp, double Watt)> SelectWatts(TimeSpan TimeSpanFrom = default)
     {
-        List<(int Watt, DateTime Timestamp)> result = new();
+        List<(DateTime Timestamp, double Watt)> result = new();
 
         lock (_lock)
         {
@@ -174,8 +174,9 @@ internal static class Database
 
                 while (reader?.Read() == true)
                 {
-                    result.Add((reader.GetInt32("watt"),
-                                DateTime.SpecifyKind(reader.GetDateTime("timestamp"), DateTimeKind.Utc).ToLocalTime()
+                    result.Add((
+                                DateTime.SpecifyKind(reader.GetDateTime("timestamp"), DateTimeKind.Utc).ToLocalTime(),
+                                reader.GetInt32("watt")
                                ));
                 }
             }
@@ -188,9 +189,9 @@ internal static class Database
         return result;
     }
 
-    public static List<(int Watt, DateTime Timestamp)> SelectAverageWattPerDay()
+    public static List<(DateTime Timestamp, double Watt)> SelectAverageWattPerDay()
     {
-        List<(int Watt, DateTime Timestamp)> result = new();
+        List<(DateTime Timestamp, double Watt)> result = new();
 
         lock (_lock)
         {
@@ -202,9 +203,9 @@ internal static class Database
 
                 while (reader?.Read() == true)
                 {
-                    result.Add((reader.
-                        GetInt32("avgwatt"), 
-                        DateTime.SpecifyKind(reader.GetDateTime("day"), DateTimeKind.Utc).ToLocalTime()
+                    result.Add((
+                        DateTime.SpecifyKind(reader.GetDateTime("day"), DateTimeKind.Utc).ToLocalTime(),
+                        reader.GetInt32("avgwatt")
                     ));
                 }
             }
@@ -290,6 +291,71 @@ internal static class Database
         }
 
         return null;
+    }
+
+    public static List<(DateTime Date, DateTime FirstWattTime)> SelectFirstWattTimePerDay()
+    {
+        List<(DateTime Date, DateTime FirstWattTime)> result = new();
+
+        lock (_lock)
+        {
+            try
+            {
+                Connect();
+
+                using MySqlDataReader? reader = ExecuteQuery(
+                    "SELECT DATE(`timestamp`) AS day, MIN(`timestamp`) as mintime " +
+                    "FROM`solardata` WHERE watt > 0 " +
+                    "GROUP BY day;");
+
+                while (reader?.Read() == true)
+                {
+                    DateTime day = DateTime.SpecifyKind(reader.GetDateTime("day"), DateTimeKind.Utc);
+                    DateTime time = DateTime.SpecifyKind(reader.GetDateTime("mintime"), DateTimeKind.Utc);
+                    time =  new DateTime(1, 1, 1, time.Hour, time.Minute, time.Second, DateTimeKind.Utc);
+
+                    result.Add((day, time));
+                }
+            }
+            finally
+            {
+                Disconnect();
+            }
+        }
+
+        return result;
+    }
+
+    public static List<(DateTime Date, DateTime LastWattTime)> SelectLastWattTimePerDay()
+    {
+        List<(DateTime Date, DateTime LastWattTime)> result = new();
+
+        lock (_lock)
+        {
+            try
+            {
+                Connect();
+
+                using MySqlDataReader? reader = ExecuteQuery(
+                    "SELECT DATE(`timestamp`) AS day, MAX(`timestamp`) as maxtime " +
+                    "FROM`solardata` WHERE watt > 0 " +
+                    "GROUP BY day;");
+
+                while (reader?.Read() == true)
+                {
+                    result.Add(
+                        (DateTime.SpecifyKind(reader.GetDateTime("day"), DateTimeKind.Utc),
+                         DateTime.SpecifyKind(reader.GetDateTime("maxtime"), DateTimeKind.Utc))
+                    );
+                }
+            }
+            finally
+            {
+                Disconnect();
+            }
+        }
+
+        return result;
     }
 
     private static string GetConnectionString()
