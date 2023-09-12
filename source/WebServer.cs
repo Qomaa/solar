@@ -87,7 +87,7 @@ internal class WebServer
                 <h1>Solaranlage sun600g3-eu-230</h1>
 
                 <div class=""currentWatt"">
-                    <p>Jetzt: <strong>{_dataManager.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"})</p>
+                    <p>{_dataManager.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"}: <strong>{_dataManager.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ()</p>
                 </div>
 
                 <div class=""energy-stats"">
@@ -97,7 +97,7 @@ internal class WebServer
                 </div>
                 " +
                 string.Join(Environment.NewLine, _dataManager.Plots.Select(
-                    i => @$"<img src=""data:image/svg+xml;base64,{i}""/>")) +
+                    i => @$"<p><img src=""data:image/svg+xml;base64,{i}""/></p>")) +
         @" 
         </body>
         </html>";
