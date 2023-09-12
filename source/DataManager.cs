@@ -184,6 +184,17 @@ internal class DataManager
         return result;
     }
 
+    public TimeSpan GetTimeSpanSinceLastWatt()
+    {
+
+        if (LastSelectedWatt.Timestamp is null)
+        {
+            return default;
+        }
+
+        return DateTime.Now - LastSelectedWatt.Timestamp.Value;
+    }
+
     public double? TotalKwh { get; private set; }
 
     public (int? Watt, DateTime? Timestamp) LastSelectedWatt { get; private set; }

@@ -87,12 +87,12 @@ internal class WebServer
                 <h1>Solaranlage sun600g3-eu-230</h1>
 
                 <div class=""currentWatt"">
-                    <p>{_dataManager.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"}: <strong>{_dataManager.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ()</p>
+                    <p>{(_dataManager.GetTimeSpanSinceLastWatt() < TimeSpan.FromMinutes(10) ? "Jetzt" : "&auml;lter als 10 min")}: <strong>{_dataManager.LastSelectedWatt.Watt?.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedWatt.Timestamp?.ToString("HH:mm:ss") ?? "??"})</p>
                 </div>
 
                 <div class=""energy-stats"">
                     <p>Insgesamt: <strong>{_dataManager.TotalKwh?.ToString("0.0") ?? "??"} kWh</strong></p>
-                    <p>Profit: <strong>{_dataManager.ProfitEuro.ToString("0.00")} &euro;</strong></p>
+                    <p>Profit: <strong>{_dataManager.ProfitEuro:0.00} &euro;</strong></p>
                     <p>Max: <strong>{_dataManager.LastSelectedMaxWatt.Watt.ToString() ?? "??"} W</strong> ({_dataManager.LastSelectedMaxWatt.Timestamp?.ToString("ddd dd.MM.yyyy HH:mm:ss", new System.Globalization.CultureInfo("de-DE")) ?? "??"})</p>
                 </div>
                 " +
