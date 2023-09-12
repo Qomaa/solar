@@ -119,58 +119,6 @@ internal class DataManager
         Plots.Add(base64Plot);
     }
 
-    // private void CreatePlot(
-    //     string title,
-    //     List<(int Watt, DateTime Timestamp)> data,
-    //     string xAxisStringFormat,
-    //     DateTimeIntervalType xAxisIntervalType)
-    // {
-    //     LineSeries series = new();
-    //     series.Color = OxyColors.Blue;
-    //     // series.StrokeThickness = 1;
-    //     series.MarkerFill = OxyColors.Blue;
-    //     series.MarkerType = MarkerType.Circle;
-
-    //     series.Points.AddRange(
-    //         data.Select(d => new DataPoint(DateTimeAxis.ToDouble(d.Timestamp), d.Watt))
-    //             .ToArray()
-    //     );
-
-    //     DateTimeAxis d = new();
-    //     d.Minimum = DateTimeAxis.ToDouble(data.Min(d => d.Timestamp));
-    //     d.Maximum = DateTimeAxis.ToDouble(data.Max(d => d.Timestamp));
-    //     d.StringFormat = xAxisStringFormat;
-    //     d.IntervalType = xAxisIntervalType;
-    //     d.IntervalLength = 100;
-    //     d.FontSize = 20;
-    //     d.TickStyle = TickStyle.Outside;
-    //     d.AxisTickToLabelDistance = 30;
-    //     d.MajorTickSize = 15;
-
-    //     LinearAxis l = new();
-    //     l.Minimum = data.Min(d => d.Watt);
-    //     l.Maximum = data.Max(d => d.Watt);
-    //     l.Title = "Watt";
-    //     l.FontSize = 20;
-    //     l.TitleFontSize = 20;
-    //     l.TickStyle = TickStyle.Outside;
-
-    //     PlotModel plot = new();
-    //     plot.Title = title;
-    //     plot.Axes.Add(d);
-    //     plot.Axes.Add(l);
-    //     plot.Series.Add(series);
-    //     // plot.Background = OxyColors.White;
-
-    //     using MemoryStream ms = new MemoryStream();
-
-    //     SvgExporter exporter = new() { Width = 1280, Height = 1024 };
-    //     exporter.Export(plot, ms);
-
-    //     string base64Plot = System.Convert.ToBase64String(ms.ToArray());
-    //     Plots.Add(base64Plot);
-    // }
-
     private static string? GetSolarFullResult()
     {
         try
@@ -215,7 +163,7 @@ internal class DataManager
             return wattNumber;
 
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Log.Trace(ex.Message);
             return null;
