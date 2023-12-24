@@ -27,7 +27,7 @@ internal class WebServer
 
             app.MapGet("/", (HttpContext c) =>
             {
-                c.Response.Headers.Add("Content-Type", "text/html");
+                c.Response.Headers.Append("Content-Type", "text/html");
 
                 return GetResultHtml();
             });
