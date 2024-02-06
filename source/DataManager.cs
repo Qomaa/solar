@@ -7,7 +7,7 @@ using OxyPlot;
 /// </summary>
 internal class DataManager
 {
-    public const float PRICE_PER_KWH = 41.37F;
+    public const float PRICE_PER_KWH = 31.87F;
 
     private Thread _fetchAndStoreThread;
 
@@ -46,7 +46,14 @@ internal class DataManager
 
                 LastSelectedWatt = Database.SelectLastWatt();
                 LastSelectedMaxWatt = Database.SelectMaxWatt();
-                ProfitEuro = TotalKwh.HasValue ? TotalKwh.Value * PRICE_PER_KWH / 100 : 0;
+
+
+                double profitTill2ndFeb2024 = 130.94;
+                double totalKwhTill2ndFeb2024 = 316.5;
+                
+                double profitSince2ndFeb2024 = TotalKwh.HasValue ? (TotalKwh.Value - totalKwhTill2ndFeb2024) * PRICE_PER_KWH / 100 : 0;
+
+                ProfitEuro = profitTill2ndFeb2024 + profitSince2ndFeb2024;
 
                 Plots.Clear();
                 CreatePlot("24h", Database.SelectWatts(TimeSpan.FromDays(1)), "HH:mm", DateTimeIntervalType.Hours);
