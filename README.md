@@ -1,4 +1,4 @@
-# Self hosted web service for sun600g3
+# Self hosted web site for sun600g3
 Fetches output power from sun600g3-eu-230. Stores output in a MariaDB. Provides stored data over a web server.
 
 May also work with other deye microinverters (not tested).
