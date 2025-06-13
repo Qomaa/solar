@@ -48,12 +48,14 @@ internal class DataManager
                 LastSelectedMaxWatt = Database.SelectMaxWatt();
 
 
-                double profitTill2ndFeb2024 = 130.94;
-                double totalKwhTill2ndFeb2024 = 316.5;
+                // double profitTill2ndFeb2024 = 130.94;
+                // double totalKwhTill2ndFeb2024 = 316.5;
+                double profitTill10June2025 = 337.68;
+                double totalKwhTill10June2025 = 965.2;
                 
-                double profitSince2ndFeb2024 = TotalKwh.HasValue ? (TotalKwh.Value - totalKwhTill2ndFeb2024) * PRICE_PER_KWH / 100 : 0;
+                double profitSince10June2025 = TotalKwh.HasValue ? (TotalKwh.Value - totalKwhTill10June2025) * PRICE_PER_KWH / 100 : 0;
 
-                ProfitEuro = profitTill2ndFeb2024 + profitSince2ndFeb2024;
+                ProfitEuro = profitTill10June2025 + profitSince10June2025;
 
                 Plots.Clear();
                 CreatePlot("24h", Database.SelectWatts(TimeSpan.FromDays(1)), "HH:mm", DateTimeIntervalType.Hours);
